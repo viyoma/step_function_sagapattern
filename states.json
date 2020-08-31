@@ -1,0 +1,124 @@
+{
+    "Comment": "A distributed saga example.",
+    "StartAt": "BookTrip",
+    "States": {
+      "BookTrip": {
+        "Type": "Parallel",
+        "Next": "Trip Booking Successful",
+        "Branches": [
+           {
+            "StartAt": "BookHotel",
+            "States": {
+               "BookHotel": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:lambda:{YOUR_AWS_REGION}:{YOUR_AWS_ACCOUNT_ID}:function:serverless-sagas-dev-bookHotel",
+                  "ResultPath": "$.BookHotelResult",
+                  "End": true
+                }
+            }
+          },
+          {
+            "StartAt": "BookFlight",
+            "States": {
+              "BookFlight": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:lambda:{YOUR_AWS_REGION}:{YOUR_AWS_ACCOUNT_ID}:function:serverless-sagas-dev-bookFlight",
+                  "ResultPath": "$.BookFlightResult",
+                  "End": true
+                }
+            }
+          },
+          {
+            "StartAt": "BookCar",
+            "States": {
+               "BookCar": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:lambda:{YOUR_AWS_REGION}:{YOUR_AWS_ACCOUNT_ID}:function:serverless-sagas-dev-bookCar",
+                  "ResultPath": "$.BookCarResult",
+                  "End": true
+                }
+            }
+          }
+        ],
+        "Catch": [
+          {
+            "ErrorEquals": ["States.ALL"],
+            "ResultPath": "$.BookTripError",
+            "Next": "Trip Booking Failed"
+          }
+        ]
+      },
+      "Trip Booking Failed": {
+        "Type": "Pass",
+        "Next": "CancelTrip"
+      },
+      "CancelTrip": {
+        "Type": "Parallel",
+        "Next": "Trip Booking Cancelled",
+        "Branches": [
+          {
+            "StartAt": "CancelHotel",
+            "States": {
+              "CancelHotel": {
+                "Type": "Task",
+                "Resource": "arn:aws:lambda:{YOUR_AWS_REGION}:{YOUR_AWS_ACCOUNT_ID}:function:serverless-sagas-dev-cancelHotel",
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "ResultPath": "$.CancelHotelError",
+                    "Next": "CancelHotel"
+                  }
+                ],
+                "ResultPath": "$.CancelHotelResult",
+                "End": true
+              }
+            }
+          },
+          {
+            "StartAt": "CancelFlight",
+            "States": {
+              "CancelFlight": {
+                "Type": "Task",
+                "Resource": "arn:aws:lambda:{YOUR_AWS_REGION}:{YOUR_AWS_ACCOUNT_ID}:function:serverless-sagas-dev-cancelFlight",
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "ResultPath": "$.CancelFlightError",
+                    "Next": "CancelFlight"
+                  }
+                ],
+                "ResultPath": "$.CancelFlightResult",
+                "End": true
+              }
+            }
+          },
+          {
+            "StartAt": "CancelCar",
+            "States": {
+              "CancelCar": {
+                "Type": "Task",
+                "Resource": "arn:aws:lambda:{YOUR_AWS_REGION}:{YOUR_AWS_ACCOUNT_ID}:function:serverless-sagas-dev-cancelCar",
+                "Catch": [
+                  {
+                    "ErrorEquals": ["States.ALL"],
+                    "ResultPath": "$.CancelCarError",
+                    "Next": "CancelCar"
+                  }
+                ],
+                "ResultPath": "$.CancelCarResult",
+                "End": true
+              }
+            }
+          }
+        ]
+        },
+      "Trip Booking Successful": {
+        "Type": "Succeed"
+      },
+      "Trip Booking Cancelled": {
+        "Type": "Fail",
+        "Cause": "Trip cancelled due to error.",
+        "Error": "TripCancelledError"
+      }
+    }
+  }

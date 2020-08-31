@@ -1,0 +1,158 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Creates all lambda functions needed for the Step Function state machine execution
+
+Resources:
+  LambdaEdgeFunctionRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+          Path: "/"
+          ManagedPolicyArns:
+              - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+          Policies:
+            - PolicyName: workdocs1
+              PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  - Effect: Allow
+                    Action: 
+                      - dynamodb:GetItem
+                      - dynamodb:PutItem
+                    Resource: "*"     
+          AssumeRolePolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Sid: "AllowLambdaServiceToAssumeRole"
+                Effect: "Allow"
+                Action:
+                  - "sts:AssumeRole"
+                Principal:
+                  Service:
+                    - "lambda.amazonaws.com"
+                    - "edgelambda.amazonaws.com"
+  hotelBookingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: hotel_bookings
+      AttributeDefinitions:
+        - AttributeName: tripId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: tripId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  carBookingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: car_bookings
+      AttributeDefinitions:
+        - AttributeName: tripId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: tripId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  flightBookingsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: flight_bookings
+      AttributeDefinitions:
+        - AttributeName: tripId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: tripId
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  bookHotelLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: book-hotel.handler
+      Runtime: nodejs10.x
+      CodeUri: functions/
+      Environment:
+        Variables:
+          HOTEL_BOOKINGS_TABLE_NAME: hotel_bookings
+      Role: !GetAtt LambdaEdgeFunctionRole.Arn
+      AutoPublishAlias: live
+      MemorySize: 128
+      Timeout: 30
+
+  bookCarLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: book-car.handler
+      Runtime: nodejs10.x
+      CodeUri: functions/
+      Environment:
+        Variables:
+          CAR_BOOKINGS_TABLE_NAME: car_bookings
+      Role: !GetAtt LambdaEdgeFunctionRole.Arn
+      AutoPublishAlias: live
+      MemorySize: 128
+      Timeout: 30
+
+  bookFlightLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: book-flight.handler
+      Runtime: nodejs10.x
+      CodeUri: functions/
+      Environment:
+        Variables:
+          FLIGHT_BOOKINGS_TABLE_NAME: flight_bookings
+      Role: !GetAtt LambdaEdgeFunctionRole.Arn
+      AutoPublishAlias: live
+      MemorySize: 128
+      Timeout: 30
+  
+  cancelHotelLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: cancel-hotel.handler
+      Runtime: nodejs10.x
+      CodeUri: functions/
+      Environment:
+        Variables:
+          HOTEL_BOOKINGS_TABLE_NAME: hotel_bookings
+      Role: !GetAtt LambdaEdgeFunctionRole.Arn
+      AutoPublishAlias: live
+      MemorySize: 128
+      Timeout: 30
+
+  cancelCarLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: cancel-car.handler
+      Runtime: nodejs10.x
+      CodeUri: functions/
+      Environment:
+        Variables:
+          CAR_BOOKINGS_TABLE_NAME: car_bookings
+      Role: !GetAtt LambdaEdgeFunctionRole.Arn
+      AutoPublishAlias: live
+      MemorySize: 128
+      Timeout: 30
+  
+  cancelFlightLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: cancel-flight.handler
+      Runtime: nodejs10.x
+      CodeUri: functions/
+      Environment:
+        Variables:
+          FLIGHT_BOOKINGS_TABLE_NAME: flight_bookings
+      Role: !GetAtt LambdaEdgeFunctionRole.Arn
+      AutoPublishAlias: live
+      MemorySize: 128
+      Timeout: 30
